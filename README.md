@@ -10,9 +10,13 @@ General simplified structure:
 
 
 Previously built a single-threaded version of this. Current version is multi-threaded and includes:
+
 Lock-free Object pool for GameObjects - allows dynamic resizing at runtime depending on config settings which can also be changed in anticipation of higher/lower demand.
 
-Job System - game loop is divided into the following phases - Update->Collision->Cleanup->Snapshot (rendering occurs during update and collision phases). Phase transition is managed by a job, this job creates all the jobs for the next phase and stores them in a buffer queue, it then waits for other threads to finish and sync with the main thread if needed. It then swaps the buffer and signals all the threads. This new batch of jobs contains the next phase transition job on the end.
+Job System - game loop is divided into the following phases - Update->Collision->Cleanup->Snapshot (rendering occurs during update and collision phases). 
+Phase transition is managed by a job, this job creates all the jobs for the next phase and stores them in a buffer queue, it then waits for other threads to finish and sync with the main thread if needed. 
+It then swaps the buffer and signals all the threads. 
+This new batch of jobs contains the next phase transition job on the end.
 
 Component system - similar to Unity, currently includes collision components (box,circle and polygon) and a pooled object component for objects that belong to a pool.
 
