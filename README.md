@@ -4,6 +4,11 @@ Uses SFML library for graphics, 32-bit, C++ 17.
 
 Recreation of Asteroids, with addition that every 30 seconds there is increased asteroid spawn rate and increased fire rate for a period.
 
+General simplified structure:
+
+![image](https://github.com/MilesOram/Asteroids/assets/86774698/37dd3353-e852-4466-aaec-41187d7c8d94)
+
+
 Previously built a single-threaded version of this. Current version is multi-threaded and includes:
 Lock-free Object pool for GameObjects - allows dynamic resizing at runtime depending on config settings which can also be changed in anticipation of higher/lower demand.
 
@@ -20,9 +25,9 @@ This tag comparison and grid design in general in focused on good cache locality
 The allocator tracks in-use nodes with a bit array, currently these are stored in a separate array but I intend to move them to the start of that cell's memory.
 So the memory will look like:
 
-BitArry | Node | Node | Node...
+BitArray | Node | Node | Node...
 
-BitArry | Node | Node | Node...
+BitArray | Node | Node | Node...
 etc.
 
 Working in 32-bit, the node struct contains a GameObject*, and two uint16_t for both tags - 8 bytes total.
