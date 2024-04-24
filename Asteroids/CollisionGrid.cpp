@@ -50,7 +50,7 @@ void ObjectCollisionGrid::ResolveCollisionsOfCells(uintptr_t pData)
                 auto comp = (node + first)->SelfCollisionMask & (node + second)->OtherCollisionMask;
                 if (comp > 0)
                 {
-                    if (comp % 2 == 1)
+                    if (comp % 2 == 1 && comp > 1)
                     {
                         // both tags had their last bit == 1, meaning they are taking up more than one cell in the grid, don't want to double count collisions
                         // check not in completed collisions
