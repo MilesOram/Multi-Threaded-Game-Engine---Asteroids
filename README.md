@@ -21,6 +21,7 @@ The allocator tracks in-use nodes with a bit array, currently these are stored i
 So the memory will look like:
 
 BitArry | Node | Node | Node...
+
 BitArry | Node | Node | Node...
 etc.
 
