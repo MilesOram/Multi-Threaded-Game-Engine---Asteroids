@@ -1,5 +1,5 @@
 # Asteroids
-WIP.
+WIP. README is unfinished.
 Uses SFML library for graphics, 32-bit, C++ 17.
 
 Recreation of Asteroids, with addition that every 30 seconds there is increased asteroid spawn rate and increased fire rate for a period.
