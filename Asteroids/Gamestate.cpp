@@ -389,7 +389,7 @@ void Gamestate::BeginPlay()
 	CreatePhaseTransitionDeclaration();
 
 	// kickoff
-	sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "LHG Code Exercise");
+	sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "");
 	sf::Clock gameClock;
 
 	m_PhaseCounter->count.store(1);
