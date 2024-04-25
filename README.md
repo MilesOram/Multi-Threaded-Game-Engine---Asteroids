@@ -14,7 +14,7 @@ Previously built a single-threaded version of this. Current version is multi-thr
 # Lock-free object pool
 For GameObjects.
 Allows dynamic resizing at runtime depending on config settings which can also be changed in anticipation of higher/lower demand.
-Originally it was templated so that it could store: T prefab and then make_shared<T>(prefab) to make copies and static_assert that it derived from GameObject.
+Originally it was templated so that it could store: T prefab and then make_shared`<T>`(prefab) to make copies and static_assert that it derived from GameObject.
 Instead implemented a clone function
 
 # Job System
