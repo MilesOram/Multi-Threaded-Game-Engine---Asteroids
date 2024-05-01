@@ -54,7 +54,7 @@ I know you can do it if the base class is templated and derived classes inherit 
 Uses GJK for all intersection testing (excluding circle-circle) and double dispatch to select the relevant function.
 Screen is partitioned into a grid, each object uses a phase box to place it in the cells in the grid that it occupies.
 Could use a spatial hash grid but wanted something that allowed concurrent lock-free insertion and removal, although at the cost of a larger memory footprint.
-The grid allocates a large block of memory which it divides into cells which contain nodes for each object.
+The grid allocates a large block of memory which it divides into cells which contain nodes for each object - there are very obvious drawbacks to this but I wanted see how much I could get out of it.
 The nodes also contain the collision tags of that object and the tags it is looking for, the result is a check for (currentNode->selfTags & nextNode->otherTags > 0).
 This tag comparison and grid design in general in focused on good cache locality.
 The allocator tracks in-use nodes with a bit array, currently these are stored in a separate array but I intend to move them to the start of that cell's memory.
@@ -78,6 +78,7 @@ Obviously I need to change this so that it finds the difference between the old 
 The reason I've yet to do this is because objects store the node offset (an offset such that startNode + offset will be the node containing this object) but the offsets are stored in a vector.
 This vector is ordered in the way the phase box is iterated through, so it becomes messy when only partially updating.
 I intend to find a simpler solution that is cleaner, and also makes it easier to complete concurrent defrags if that's possible.
+The support functions for the GJK functions are very simple and I imagine these could be made a lot more efficient for the current context.
 
 # Rendering
 Main thread does all the rendering.
