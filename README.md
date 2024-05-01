@@ -9,29 +9,51 @@ General simplified structure:
 ![image](https://github.com/MilesOram/Asteroids/assets/86774698/37dd3353-e852-4466-aaec-41187d7c8d94)
 
 
-Previously built a single-threaded version of this. Current version is multi-threaded and includes:
+Previously built a single-threaded version of this.
+Current version is multi-threaded and the driving focus was learning about the following features and practising multithreading.
+Optimising performance was always considered, but extensibility was often favoured over deliberately building an engine to run Asteroids as well as possible.
+If building out a feature let me learn more, but incurred some unnecessary overhead, I would usually choose to do it here.
 
 # Lock-free object pool
 For GameObjects.
 Allows dynamic resizing at runtime depending on config settings which can also be changed in anticipation of higher/lower demand.
 Originally it was templated so that it could store: T prefab and then make_shared`<T>`(prefab) to make copies and static_assert that it derived from GameObject.
-Instead implemented a clone function
+Instead implemented a clone function for each GameObject and simply store a shared_ptr to a GameObject and call clone to make copies - no need for templating.
 
 # Job System
-Game loop is divided into the following phases - Update->Collision->Cleanup->Snapshot (rendering occurs during update and collision phases). 
+Game loop is divided into the following phases - Update -> Collision -> Cleanup -> Snapshot (rendering occurs during update and collision phases). 
 Phase transition is managed by a job, this job creates all the jobs for the next phase and stores them in a buffer queue, it then waits for other threads to finish and sync with the main thread if needed. 
-It then swaps the buffer and signals all the threads. 
+It then swaps the buffer with the main queue and signals all the threads. 
 This new batch of jobs contains the next phase transition job on the end.
+The idea of the buffer queue was that a thread could prepare the next batch of jobs whilst other threads finished the current phase's work.
+The potential problem with this is that the thread that takes the transition job is then polling for the counter to be zero after it has prepared the buffer.
+Given it popped the transition job, it was likely the first thread to finish its work, but ideally you might want it to be available for any other jobs created mid-phase, instead of now being locked away.
 
 # Component system
-Similar to Unity, currently includes collision components (box,circle and polygon) and a pooled object component for objects that belong to a pool.
+Similar to Unity, currently includes collision components (box, circle and polygon) and a pooled object component for objects that belong to a pool.
 
-I didn't like using type indentification to store the components in a map, so I wanted the keys to be ints, specifi
+I didn't like using type indentification to store the components in a map, so I wanted the keys to be ints.
+Each int would be unique to the derived class i.e. CollisionComponent or PooledObjectComponent, but each of the Box, Circle and Polygon classes (which derive from CollisionComponent) would share the unique CollisionComponent int (since each object will only have one collision component and you will be calling GetComponent`<CollisionComponent>`()).
+I needed derived from Component to have the unique ids, but classes derived from these would use their parent's.
+
+![image](https://github.com/MilesOram/Asteroids/assets/86774698/5b0b6027-fa1c-4482-a474-31fddf461b5d)
+
+This is used to assign the unique ids to each class and Component has: static ComponentIdCounter IdCounter.
+The desired functionality is similar to a templated virtual getId function (which isn't possible) to then call T::getId in the get/add component templated functions, which calls IdCounter.getId`<T>`();.
+My current solution, which I don't like, involves each class derived from Component having a function like this:
+
+![image](https://github.com/MilesOram/Asteroids/assets/86774698/dfdccfc6-c225-4107-bc56-a64570415a92)
+
+This way any class derived from CollisionComponent or CollisionComponent itself will use this function when T::GetId() is called.
+In theory this could be an overriden non-static virtual function for adding a component, but the GetComponent function has no argument and only has the type T to use (no associated object).
+So it seemed like making this function static and hence not virtual was the only choice from this point, but then how do you make assurances that each derived class implements this function?
+I don't know the answer, I can't think of a place to put a static assertion that isn't redundant.
+I know you can do it if the base class is templated and derived classes inherit from Base`<Derived>`, but I haven't thought through any potential ramifications of this.
 
 # Collision
 Uses GJK for all intersection testing (excluding circle-circle) and double dispatch to select the relevant function.
 Screen is partitioned into a grid, each object uses a phase box to place it in the cells in the grid that it occupies.
-Could use a spatial hash grid but wanted something that allowed concurrent lock-free insertion and removal, at the cost of a larger memory footprint.
+Could use a spatial hash grid but wanted something that allowed concurrent lock-free insertion and removal, although at the cost of a larger memory footprint.
 The grid allocates a large block of memory which it divides into cells which contain nodes for each object.
 The nodes also contain the collision tags of that object and the tags it is looking for, the result is a check for (currentNode->selfTags & nextNode->otherTags > 0).
 This tag comparison and grid design in general in focused on good cache locality.
