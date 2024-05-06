@@ -87,8 +87,6 @@ In theory this project could have no main thread if I slightly tweaked the count
 But it makes sense to have one thread assigned to only rendering.
 Game objects are stored as shared_ptrs in a multiset, ordered by their texture and then id.
 This groups objects of the same texture for faster draw calls.
-I also wanted to try reversing the direction of iterating through the set each frame to see if this would make any difference, since the current texture would be the same at the end of a frame and the start of the next.
-Object insertion/removal/cleanup is queued during either the update or collision step, and carried out during the cleanup phase.
 The double buffering is achieved by storing the GameObject's rotation and position into that object's sprite at the end of each frame.
 The main thread then renders using the sprite's pos and rot, which is untouched during update/collision phases.
 
