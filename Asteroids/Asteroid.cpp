@@ -3,12 +3,22 @@
 #include "Components.h"
 #include "Gamestate.h"
 
+// collision tags
 const uint16_t Asteroid::DefaultCollisionTagsSelf{ 0b0110000000000000 };
 const uint16_t Asteroid::DefaultCollisionTagsOther{ 0b1001000000000000 };
 
+// pool names
 const char Asteroid::AsteroidSmallPoolName[14] = "AsteroidSmall";
 const char Asteroid::AsteroidMediumPoolName[15] = "AsteroidMedium";
 const char Asteroid::AsteroidLargePoolName[14] = "AsteroidLarge";
+
+// texture atlas fixed coords
+const sf::Vector2f Asteroid::TextureAtlasSmallTL = {400,0};
+const sf::Vector2f Asteroid::TextureAtlasMediumTL = { 200,0 };
+const sf::Vector2f Asteroid::TextureAtlasLargeTL = { 0,0 };
+const sf::Vector2f Asteroid::TextureAtlasSmallBR = {473,69};
+const sf::Vector2f Asteroid::TextureAtlasMediumBR = { 295,90 };
+const sf::Vector2f Asteroid::TextureAtlasLargeBR = { 156,144 };
 
 Asteroid::Asteroid(sf::Texture& tex, AST_SIZE size) : m_Size(size)
 {
@@ -75,8 +85,8 @@ void Asteroid::Split()
 
 void Asteroid::SpawnMediums() const
 {
-    sf::Vector2f offset = { std::sin(GetRotation() * TO_RADIANS) * 40, -std::cos(GetRotation() * TO_RADIANS) * 40 };
-
+    float offsetMultiplier = 40;
+    sf::Vector2f offset = { std::sin(GetRotation() * TO_RADIANS) * offsetMultiplier, -std::cos(GetRotation() * TO_RADIANS) * offsetMultiplier };
 
     std::shared_ptr<GameObject> ast = Gamestate::instance->GetPooledObject(AsteroidMediumPoolName);
     std::shared_ptr<GameObject> ast2 = Gamestate::instance->GetPooledObject(AsteroidMediumPoolName);
@@ -85,7 +95,8 @@ void Asteroid::SpawnMediums() const
 }
 void Asteroid::SpawnSmalls() const
 {
-    sf::Vector2f offset = { std::sin(GetRotation() * TO_RADIANS) * 25, -std::cos(GetRotation() * TO_RADIANS) * 25 };
+    float offsetMultiplier = 25;
+    sf::Vector2f offset = { std::sin(GetRotation() * TO_RADIANS) * offsetMultiplier, -std::cos(GetRotation() * TO_RADIANS) * offsetMultiplier };
 
     std::shared_ptr<GameObject> ast = Gamestate::instance->GetPooledObject(AsteroidSmallPoolName);
     std::shared_ptr<GameObject> ast2 = Gamestate::instance->GetPooledObject(AsteroidSmallPoolName);
@@ -115,3 +126,29 @@ std::shared_ptr<GameObject> Asteroid::CloneToSharedPtr()
     return obj;
 }
 
+sf::Vector2f Asteroid::GetTextureAtlasOffsetTL() const
+{
+    switch (m_Size)
+    {
+    case AST_SIZE::small:
+        return TextureAtlasSmallTL;
+    case AST_SIZE::medium:
+        return TextureAtlasMediumTL;
+    case AST_SIZE::large:
+        return TextureAtlasLargeTL;
+    }
+    return { 0,0 };
+}
+sf::Vector2f Asteroid::GetTextureAtlasOffsetBR() const
+{
+    switch (m_Size)
+    {
+    case AST_SIZE::small:
+        return TextureAtlasSmallBR;
+    case AST_SIZE::medium:
+        return TextureAtlasMediumBR;
+    case AST_SIZE::large:
+        return TextureAtlasLargeBR;
+    }
+    return { 0,0 };
+}

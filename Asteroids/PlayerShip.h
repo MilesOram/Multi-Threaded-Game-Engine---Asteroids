@@ -2,8 +2,7 @@
 #include "GameObject.h"
 
 // player controlled ship, fires projectiles and is damaged by asteroids, controlled with arrow keys to rotate and accelerate/decelerate
-// velocity decays over time, respawns in middle after hit and loses a life, then invulnerable for a period,
-// while flying, wraps around screen 
+// velocity decays over time, respawns in middle after hit and loses a life, then invulnerable for a period, while flying, wraps around screen 
 class PlayerShip : public GameObject
 {
 private:
@@ -19,19 +18,28 @@ private:
 	const float m_DecayRate = 30.0f;
 	const float m_InvulnTimer = 3.f;
 
+	const float m_MaxLightTime = 5.f;
+	float m_LightTimer = 5.f;
+	float m_TimeSinceLightSwitch = 0.f;
+	bool m_LightMax = false;
+
 	// processes inputs, called at the start of update
 	void HandleInputs(float deltaTime);
-	// fires projectile in the forward direction
+
+	// control changes
 	void FireProjectile();
 	void RotateLeft(float);
 	void RotateRight(float);
 	void AccelerateForward(float);
 	void Decelerate(float);
+
 	// velocity decays by a fixed amount
 	void Decay(float);
+
 public:
 	PlayerShip(sf::Texture& _Texture);
 	PlayerShip(const PlayerShip&);
+
 	// overrides
 	void Update(float deltaTime) override;
 	void HandleCollision(uint16_t otherTags) override;

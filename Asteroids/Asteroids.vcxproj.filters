@@ -45,6 +45,9 @@
     <ClCompile Include="ObjectPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Particles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ObjectPool.h">
@@ -86,5 +89,40 @@
     <ClInclude Include="GamestateTemplates.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Particles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="glow.vert">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="glow.frag">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="blur.vert">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="blur.frag">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="fog.frag">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="fog.vert">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="altGlow.frag">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="uniqueColour.frag">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="uniqueColour.vert">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="altFog.frag">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -10,7 +10,9 @@ void Gamestate::InitialisePlayer()
 {
 	m_Player = std::make_shared<PlayerShip>(ObjectTextures[0]);
 	std::shared_ptr<GameObject> player = m_Player;
-	Polygon verts = { {-10.f, 8.6f},{0.f, 17.3f},{10.f, 8.6f},{10.f, -8.6f},{0, -17.3f},{ -10.f, -8.6f } };
+
+	// note that verts must go round anti-clockwise
+	Polygon verts = { {-4.f, -15.f },{4.f, -15.f},{25.f, 0.f},{4.f, 15.f},{-4.f, 15.f},{-25.f, -0.f} };
 	player->AddComponent<PolygonCollisionComponent>(player, verts, PlayerShip::DefaultCollisionTagsSelf, PlayerShip::DefaultCollisionTagsOther);
 	m_AllActiveGameObjects.insert(m_Player);
 }
@@ -26,11 +28,13 @@ void Gamestate::InitialiseObjectPools()
 	thrid flag = can be damaged by 'player damage'
 	fourth flag = can deal 'player damage'
 
-				self.			   lookfor.			v this bit is reserved for use by the collision grid, so up to 15 unique tags can be used
+				self.			   lookfor.		   v this bit is reserved for use by the collision grid (denotes edges of phase box)
+												   |v this bit is reserved for use by the collision grid (denotes occupying more than one grid cell)
 	Player:     0b1000000000000000 0b0100000000000000
 	Projectile: 0b1001000000000000 0b0110000000000000
 	Asteroids:  0b0110000000000000 0b1001000000000000
 
+	14 availble tags (16-2)
 	*/
 	
 	// projectile prefab
@@ -40,24 +44,36 @@ void Gamestate::InitialiseObjectPools()
 	// make pool - sets the pool pointer in the pooledobjectcomponent
 	m_PoolManager->CreatePool(m_Player->ProjectilePoolName, projectileBase, 3, 10, .5f, 1.f);
 
+#if USE_CPU_FOR_OCCLUDERS
+	// not setup to use texture atlas
+	int astSmallTexIndex = 4;
+	int astMediumTexIndex = 3;
+	int astLargeTexIndex = 2;
+#else
+	// all use texture atlas
+	int astSmallTexIndex = 5;
+	int astMediumTexIndex = 5;
+	int astLargeTexIndex = 5;
+#endif
 	// large asteroid prefab
-	std::shared_ptr<GameObject> asteroidLarge = std::make_shared<Asteroid>(ObjectTextures[2], AST_SIZE::large);
+	std::shared_ptr<GameObject> asteroidLarge = std::make_shared<Asteroid>(ObjectTextures[astLargeTexIndex], AST_SIZE::large);
 	asteroidLarge->AddComponent<PooledObjectComponent>(asteroidLarge, nullptr);
-	Polygon verts = { {69.28f,40.f},{0,80.f},{-69.28f,40.f},{-69.28f,-40.f},{0,-80.f},{69.28f,-40.f} };
+	Polygon verts = { {-29.8f,-55.2f}, {32.8f,-54.6f}, {63.6f,-0.2f}, {31.8f,53.7f}, {-30.7f,53.2f}, {-61.5f,-1.3f} };
 	asteroidLarge->AddComponent<PolygonCollisionComponent>(asteroidLarge, verts, Asteroid::DefaultCollisionTagsSelf, Asteroid::DefaultCollisionTagsOther);
-	// make pool
-	m_PoolManager->CreatePool(Asteroid::AsteroidLargePoolName, asteroidLarge, 3, 10, .5f, 1.f);
+	
+	m_PoolManager->CreatePool(Asteroid::AsteroidLargePoolName, asteroidLarge, 5, 10, .5f, 1.f);
 
 	// medium asteroid prefab
-	std::shared_ptr<GameObject> asteroidMedium = std::make_shared<Asteroid>(ObjectTextures[3], AST_SIZE::medium);
+	std::shared_ptr<GameObject> asteroidMedium = std::make_shared<Asteroid>(ObjectTextures[astMediumTexIndex], AST_SIZE::medium);
 	asteroidMedium->AddComponent<PooledObjectComponent>(asteroidMedium, nullptr);
-	asteroidMedium->AddComponent<BoxCollisionComponent>(asteroidMedium, 45.f, 45.f, Asteroid::DefaultCollisionTagsSelf, Asteroid::DefaultCollisionTagsOther);
-	m_PoolManager->CreatePool(Asteroid::AsteroidMediumPoolName, asteroidMedium, 3, 10, .5f, 1.f);
+	asteroidMedium->AddComponent<CircleCollisionComponent>(asteroidMedium, 40.f, Asteroid::DefaultCollisionTagsSelf, Asteroid::DefaultCollisionTagsOther);
+	
+	m_PoolManager->CreatePool(Asteroid::AsteroidMediumPoolName, asteroidMedium, 5, 10, .5f, 1.f);
 
 	// small asteroid prefab
-	std::shared_ptr<GameObject> asteroidSmall = std::make_shared<Asteroid>(ObjectTextures[4], AST_SIZE::small);
+	std::shared_ptr<GameObject> asteroidSmall = std::make_shared<Asteroid>(ObjectTextures[astSmallTexIndex], AST_SIZE::small);
 	asteroidSmall->AddComponent<PooledObjectComponent>(asteroidSmall, nullptr);
-	asteroidSmall->AddComponent<CircleCollisionComponent>(asteroidSmall, 20.f, Asteroid::DefaultCollisionTagsSelf, Asteroid::DefaultCollisionTagsOther);
-	// make pool
-	m_PoolManager->CreatePool(Asteroid::AsteroidSmallPoolName, asteroidSmall, 3, 10, .5f, 1.f);
+	asteroidSmall->AddComponent<CircleCollisionComponent>(asteroidSmall, 25.f, Asteroid::DefaultCollisionTagsSelf, Asteroid::DefaultCollisionTagsOther);
+	
+	m_PoolManager->CreatePool(Asteroid::AsteroidSmallPoolName, asteroidSmall, 5, 10, .5f, 1.f);
 }

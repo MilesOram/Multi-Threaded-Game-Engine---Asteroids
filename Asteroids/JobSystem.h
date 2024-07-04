@@ -9,7 +9,6 @@
 
 class Gamestate;
 
-// didn't want the job system to be tightly coupled to the singleton Gamestate, decided to use a namespace - seems like it exists above everything
 namespace JobSystem
 {
     /*
@@ -38,7 +37,10 @@ namespace JobSystem
         void (*func)(void*, uintptr_t);
     };
     template< typename T, void (T::* MemberFunction)(uintptr_t) >
-    void MemberFunctionDispatcher(void* instance, uintptr_t param);
+    void MemberFunctionDispatcher(void* instance, uintptr_t param)
+    {
+        (static_cast<T*>(instance)->*MemberFunction)(param);
+    }
 
     // allowable priorities - not currently used much
     enum class Priority { LOW, NORMAL, HIGH, CRITICAL };
@@ -48,7 +50,8 @@ namespace JobSystem
     {
         std::atomic<int> count;
     };
-    // currently only use a handful of counters in total which persist, but in theory this could use some custom allocator instead of using 'new'
+
+    // currently only use a couple of counters in total, but in theory this could use some custom allocator instead of using 'new'
     Counter* AllocCounter();
     void FreeCounter(Counter* pCounter);
 
@@ -65,13 +68,16 @@ namespace JobSystem
         // pointer to counter which is decremented on job completion, used for synchronisation
         Counter* m_pCounter;
     };
+
     // used to sync with main thread
     bool IsBufferEmpty();
     // called after game ended as part of system shutdown
     void ClearBuffer();
+
     // kick job(s), takes a decl and adds it to the job queue, then notifies thread(s)
     void KickJob(const Declaration& decl);
     void KickJobs(int count, const Declaration aDecl[]);
+
     // buffer queue stores the jobs to be executed in the next phase
     void AddJobToBuffer(const Declaration& decl);
     void AddJobsToBuffer(int count, const Declaration aDecl[]);
@@ -80,17 +86,24 @@ namespace JobSystem
     void AddJobToDelayedBuffer(const Declaration& decl);
     // always active jobs
     void AddJobToUpkeep(const Declaration& decl);
+
     // wait until a counter is 0 and all jobs using that counter have completed
     void WaitForCounter(Counter* pCounter);
     // used for phase transition, waits for current phase to be done, then swaps buffer and main job queues, and signals (also moves delayed buffer->buffer)
     void WaitForCounterAndSwapBuffers(Counter* pCounter, bool waitForMainThread = false);
+
     // add job(s) to job queue and wait for it/them to finish 
     void KickJobAndWait(const Declaration& decl);
     void KickJobsAndWait(int count, const Declaration aDecl[]);
+
     // loop function for all threads, stay in this function until shutdown, locks, checks queue for job and executes if there, otherwise waits for cv signal
     void JobWorkerThread();
     // start
     void InitJobSystem(int numWorkerThreads);
+
     // stop
     void ShutdownJobSystem();
+    void NextPhase(Counter* pCounter);
+    void SetIncludeMainThread(bool inc);
 };
+

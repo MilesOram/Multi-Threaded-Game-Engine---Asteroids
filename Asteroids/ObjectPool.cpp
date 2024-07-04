@@ -52,6 +52,7 @@ void ObjectPool::AddToPool(std::shared_ptr<GameObject>& obj)
     obj->SetInactive();
     auto oldHead = std::atomic_load(&m_Head);
     auto newNode = std::make_shared<Node>(obj, oldHead);
+
     while (!std::atomic_compare_exchange_weak(&m_Head, &newNode->Next, newNode)) {}
     m_CurrentPoolSize.fetch_add(1);
 }
@@ -108,7 +109,7 @@ void ObjectPoolManager::ReturnToPool(std::shared_ptr<GameObject> obj, const std:
 }
 void ObjectPoolManager::MaintainPoolBuffers(uintptr_t _unused)
 {
-    // note that it's fine for multiple threads to be maintaining the same pool and hence for this itr to loop around (I really just needed an atomic iterator)
+    // note that it's fine for multiple threads to be maintaining the same pool and hence for this itr to loop around
     std::unique_lock<std::mutex> lock(m_MaintenanceMutex);
     auto itr = m_PoolIterator++;
     if (m_PoolIterator == m_Pools.end())

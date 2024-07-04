@@ -107,6 +107,7 @@
     <ClCompile Include="JobSystem.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="ObjectPool.cpp" />
+    <ClCompile Include="Particles.cpp" />
     <ClCompile Include="PlayerShip.cpp" />
     <ClCompile Include="Projectile.cpp" />
     <ClCompile Include="CollisionGrid.cpp" />
@@ -119,12 +120,25 @@
     <ClInclude Include="GamestateTemplates.h" />
     <ClInclude Include="JobSystem.h" />
     <ClInclude Include="ObjectPool.h" />
+    <ClInclude Include="Particles.h" />
     <ClInclude Include="PlayerShip.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="ReadersWriterLock.h" />
     <ClInclude Include="CollisionGrid.h" />
     <ClInclude Include="ThreadSafeSet.h" />
     <ClInclude Include="Top.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="altFog.frag" />
+    <None Include="altGlow.frag" />
+    <None Include="blur.frag" />
+    <None Include="blur.vert" />
+    <None Include="fog.frag" />
+    <None Include="fog.vert" />
+    <None Include="glow.frag" />
+    <None Include="glow.vert" />
+    <None Include="uniqueColour.frag" />
+    <None Include="uniqueColour.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

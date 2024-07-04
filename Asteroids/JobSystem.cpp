@@ -5,15 +5,6 @@
 
 namespace JobSystem
 {
-    // declare templates
-    template void MemberFunctionDispatcher<ObjectPoolManager, &ObjectPoolManager::MaintainPoolBuffers>(void*, uintptr_t);
-    template void MemberFunctionDispatcher<Gamestate, &Gamestate::Update>(void*, uintptr_t);
-    template void MemberFunctionDispatcher<Gamestate, &Gamestate::UpdateGameObjectSection>(void*, uintptr_t);
-    template void MemberFunctionDispatcher<Gamestate, &Gamestate::ManageThreadPhaseTransition>(void*, uintptr_t);
-    template void MemberFunctionDispatcher<Gamestate, &Gamestate::CreateSnapshotForGameObjectSection>(void*, uintptr_t);
-    template void MemberFunctionDispatcher<Gamestate, &Gamestate::ProcessInactiveObjects>(void*, uintptr_t);
-    template void MemberFunctionDispatcher<ObjectCollisionGrid, &ObjectCollisionGrid::ResolveCollisionsOfCells>(void*, uintptr_t);
-    template void MemberFunctionDispatcher<ObjectCollisionGrid, &ObjectCollisionGrid::ClearFrameCollisionPairs>(void*, uintptr_t);
     // job queue
     std::queue<Declaration> g_JobQueue;
     std::queue<Declaration> g_JobBufferQueue;
@@ -27,14 +18,13 @@ namespace JobSystem
     std::mutex g_UpkeepMutex;
     std::condition_variable g_JobCV;
     bool g_Ready = false;
+    bool g_IncludeMainThread = false;
     std::atomic<bool> g_Shutdown{ false };
     std::atomic<int> g_UpkeepJobIndex{ 0 };
 
-    template< typename T, void (T::* MemberFunction)(uintptr_t) >
-    void MemberFunctionDispatcher(void* instance, uintptr_t param)
-    {
-        (static_cast<T*>(instance)->*MemberFunction)(param);
-    }
+    // worker threads
+    std::vector<std::thread> g_workerThreads;
+
     bool IsBufferEmpty()
     {
         {
@@ -46,9 +36,10 @@ namespace JobSystem
     {
         while (!g_JobBufferQueue.empty()) g_JobBufferQueue.pop();
     }
-
-    // worker threads
-    std::vector<std::thread> g_workerThreads;
+    void SetIncludeMainThread(bool inc)
+    {
+        g_IncludeMainThread = inc;
+    }
 
     Counter* AllocCounter() 
     { 
@@ -80,6 +71,7 @@ namespace JobSystem
         }
         g_JobCV.notify_all();
     }
+
     void AddJobToBuffer(const Declaration& decl)
     {
         {
@@ -131,10 +123,10 @@ namespace JobSystem
             std::this_thread::yield();
         }
     }
-    // wait for job to terminate and then swap queues to initiate next phase
+    // NO LONGER USED, SEE NextPhase
     void WaitForCounterAndSwapBuffers(Counter* pCounter, bool waitForMainThread)
     {
-        while (pCounter->count.load() > 0)
+        while (pCounter->count > 0)
         {
             std::this_thread::yield();
         }
@@ -151,6 +143,31 @@ namespace JobSystem
                 g_JobQueue.push(g_JobBufferQueue.front());
                 g_JobBufferQueue.pop();
             }
+            if (!g_JobDelayedBufferQueue.empty())
+            {
+                std::swap(g_JobBufferQueue, g_JobDelayedBufferQueue);
+            }
+        }
+        g_Ready = true;
+        g_JobCV.notify_all();
+    }
+    void NextPhase(Counter* pCounter)
+    {
+        {
+            std::unique_lock<std::mutex> lock(g_BufferMutex);
+            std::unique_lock<std::mutex> lock2(g_JobMutex);
+            std::unique_lock<std::mutex> lock3(g_DelayedBufferMutex);
+
+            // swap buffer queue with main job queue
+            std::swap(g_JobBufferQueue, g_JobQueue);
+            pCounter->count.store(g_JobQueue.size() + g_IncludeMainThread);
+
+            while (!g_JobBufferQueue.empty())
+            {
+                g_JobQueue.push(g_JobBufferQueue.front());
+                g_JobBufferQueue.pop();
+            }
+
             if (!g_JobDelayedBufferQueue.empty())
             {
                 std::swap(g_JobBufferQueue, g_JobDelayedBufferQueue);
@@ -179,6 +196,7 @@ namespace JobSystem
         }
     }
 
+    // main loop for all but main thread, takes jobs from queue until empty then waits fo CV to begin again
     void JobWorkerThread()
     {
         ThreadIndex = Gamestate::instance->ObtainUniqueThreadLocalIndex();
@@ -211,9 +229,13 @@ namespace JobSystem
             }
             // complete the job the decrement the counter
             declCopy.m_MemberFunction.func(declCopy.m_MemberFunction.instance, declCopy.m_Param);
-            declCopy.m_pCounter->count.fetch_sub(1);
+            int counterVal = declCopy.m_pCounter->count.fetch_sub(1);
+            if (counterVal == 1)
+            {
+                NextPhase(declCopy.m_pCounter);
+            }
             // Check for low-priority jobs
-            if (ThreadIndex == NUM_THREADS-1)
+            if (ThreadIndex == NUM_THREADS)
             {
                 while (g_JobQueue.empty() && !g_UpkeepJobs.empty() && !g_Shutdown)
                 {

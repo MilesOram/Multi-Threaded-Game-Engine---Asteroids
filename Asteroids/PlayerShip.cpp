@@ -48,6 +48,20 @@ void PlayerShip::HandleInputs(float deltaTime)
             FireProjectile();
         }
     }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) && m_TimeSinceLightSwitch > 1.f)
+    {
+        m_TimeSinceLightSwitch = 0;
+        if (!m_LightMax && m_LightTimer > .5f)
+        {
+            Gamestate::instance->SignalLightUp();
+            m_LightMax = true;
+        }
+        else if (m_LightMax)
+        {
+            m_LightMax = false;
+            Gamestate::instance->SignalLightDown();
+        }
+    }
 }
 
 void PlayerShip::Update(float deltaTime)
@@ -58,6 +72,7 @@ void PlayerShip::Update(float deltaTime)
     // Timers
     m_TimeSincelastProjectile += deltaTime;
     m_TimeSinceInvulnBegin += deltaTime;
+    m_TimeSinceLightSwitch += deltaTime;
 
     // Update position and wrap to screen if needed
     sf::Vector2f newPos = m_Position + sf::Vector2f(m_VelX * deltaTime, m_VelY * deltaTime);
@@ -78,6 +93,21 @@ void PlayerShip::Update(float deltaTime)
         newPos.y -= SCREEN_HEIGHT;
     }
 
+    if (m_LightMax)
+    {
+        m_LightTimer -= deltaTime;
+        if (m_LightTimer < 0)
+        {
+            m_LightTimer = 0;
+            m_LightMax = false;
+            Gamestate::instance->SignalLightDown();
+        }
+    }
+    else
+    {
+        if (m_LightTimer < m_MaxLightTime) m_LightTimer += deltaTime;
+    }
+
     if (m_TimeSinceInvulnBegin > m_InvulnTimer && GetComponent<CollisionComponent>()->GetSelfTag() == 0)
     {
         GetComponent<CollisionComponent>()->SetSelfTag(DefaultCollisionTagsSelf);
@@ -86,6 +116,7 @@ void PlayerShip::Update(float deltaTime)
     Decay(deltaTime);
     GetComponent<CollisionComponent>()->UpdateInCollisionGrid();
 }
+
 void PlayerShip::RotateLeft(float deltaTime)
 {
     m_Rotation -= deltaTime * m_RotationSpeed;
@@ -94,6 +125,7 @@ void PlayerShip::RotateRight(float deltaTime)
 {
     m_Rotation += deltaTime * m_RotationSpeed;
 }
+
 void PlayerShip::AccelerateForward(float deltaTime)
 {
     float new_x = m_VelX + deltaTime * std::sin(m_Rotation * TO_RADIANS) * m_Acceleration;
@@ -124,6 +156,7 @@ void PlayerShip::Decelerate(float deltaTime)
     m_VelX = new_x;
     m_VelY = new_y;
 }
+
 void PlayerShip::Decay(float deltaTime)
 {
     m_VelX -= (m_VelX > 0 ? 1 : -1) * m_DecayRate * deltaTime;
@@ -133,8 +166,9 @@ void PlayerShip::Decay(float deltaTime)
 void PlayerShip::FireProjectile()
 {
     std::shared_ptr<GameObject> proj = Gamestate::instance->GetPooledObject(ProjectilePoolName);
-    proj->ReinitialiseObject(m_Position, m_Rotation, proj);
-    m_TimeSincelastProjectile = 0;
+    sf::Vector2f offset = sf::Vector2f(std::cos((m_Rotation+90) * TO_RADIANS) * 20, std::sin((m_Rotation+90) * TO_RADIANS) * 20);
+    proj->ReinitialiseObject(m_Position - offset, m_Rotation, proj);
+    m_TimeSincelastProjectile = 0;    
 }
 
 void PlayerShip::HandleCollision(uint16_t otherTags)

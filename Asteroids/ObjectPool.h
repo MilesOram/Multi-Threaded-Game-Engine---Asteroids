@@ -19,11 +19,14 @@ public:
 
     // pool must be created with a prefab, and optional args for how the pool should function and be maintained
     ObjectPool(const std::shared_ptr<GameObject>& prefab, int countIncreasePerExpansion = 3, int initialAllocationCount = 10, float lowerBoundPC = 0.2f, float upperBoundPC = 0.5f);
+    
     // objects in/out - thread-safe, lock-free insertion and removal
     std::shared_ptr<GameObject> GetPooledObject();
     void AddToPool(std::shared_ptr<GameObject>& Object);
+    
     // upkeep job
     void MaintainPoolBuffer();
+    
     // change bounds at runtime in anticipation of higher or lower requirements for the forseeable future
     void SetPoolSizeBoundPercentages(float lower, float upper);
     void FillPool(int count);
@@ -35,13 +38,17 @@ private:
         std::shared_ptr<Node> Next;
         Node(std::shared_ptr<GameObject> _Object, std::shared_ptr<Node> _Next) : Object(_Object), Next(_Next) {}
     };
+    
     // whenever the pool is expanded, copy the prefab to make new objects (T must derive from GameObject)
     std::shared_ptr<GameObject> m_Prefab;
+    
     // head of linked list storing all inactive objects - must ONLY be used as if it's atomic
     std::shared_ptr<Node> m_Head;
+    
     // atomic counts to keep track for maintaining pool size
     std::atomic<int> m_TotalObjectCount;
     std::atomic<int> m_CurrentPoolSize;
+    
     // pool config settings
     const int m_CountIncreasePerExpansion = 3;
     const int m_MinBufferSize = 5;
@@ -51,7 +58,7 @@ private:
     void RemoveHead();
 };
 
-// manages all pools, keyed by a string
+// manages all pools, keyed by a string (for readability sake, could easily be keyed by an int/enum class)
 class ObjectPoolManager
 {
 private:

@@ -3,7 +3,7 @@
 int main()
 {
     Gamestate game;
-    Gamestate::instance->BeginPlay();
+    game.BeginPlay();
 
     return 0;
 }

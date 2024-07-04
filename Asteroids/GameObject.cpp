@@ -18,11 +18,13 @@ GameObject::GameObject(const GameObject& other)
 	m_Rotation = other.m_Rotation;
 	m_ID = NextId.fetch_add(1);
 }
+
 void GameObject::CreateSnapshot()
 {
 	m_Sprite.setRotation(m_Rotation);
 	m_Sprite.setPosition(m_Position);
 }
+
 void GameObject::SetBothRotations(float rot)
 {
 	m_Rotation = rot;
@@ -39,7 +41,6 @@ void GameObject::SetSpriteTexture(sf::Texture& _tex)
 	m_Sprite.setOrigin((sf::Vector2f)_tex.getSize() / 2.f);
 }
 
-
 void GameObject::ReinitialiseObject(const sf::Vector2f& newPos, const float& newRot, const std::shared_ptr<GameObject>& obj)
 {
 	SetBothPositions(newPos);
@@ -55,7 +56,6 @@ void GameObject::CloneComponentsFromOther(std::shared_ptr<GameObject>& self, Gam
 		self->m_Components[itr->first] = itr->second->CloneToUniquePtr(self);
 	}
 }
-
 
 bool GameObject::CollisionWith(GameObject* other, uint16_t selfTags, uint16_t otherTags, thread_safe_set<std::pair<int, int>>& completedCollisions, const std::pair<int, int>& pair)
 {
@@ -85,6 +85,7 @@ bool GameObject::CollisionWith(GameObject* other, uint16_t selfTags, uint16_t ot
 	}
 	// store this pair as a completed collision, so any other threads will stop checking earlier
 	completedCollisions.insert(pair);
+
 	// class specific collision handling, currently have no need for args from the other object outside of the tags, but can very easily
 	// give these as well if needed
 	HandleCollision(otherTags);

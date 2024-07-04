@@ -7,11 +7,13 @@ class Projectile : public GameObject
 private:
 	float m_VelX = 0;
 	float m_VelY = 0;
-	const float m_Speed = 400;
+	const float m_Speed = 500;
 	void CalculateXandYVelocity();
+
 public:
 	Projectile(sf::Texture& _Texture);
 	Projectile(const Projectile& other);
+
 	// overrides
 	void Update(float deltaTime) override;
 	void HandleCollision(uint16_t otherTags) override;

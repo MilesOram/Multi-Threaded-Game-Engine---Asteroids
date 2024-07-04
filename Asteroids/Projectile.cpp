@@ -15,6 +15,7 @@ Projectile::Projectile(const Projectile& other) : GameObject(other)
     m_VelX = other.m_VelX;
     m_VelY = other.m_VelY;
 }
+
 void Projectile::Update(float deltaTime)
 {
     if (!m_Active) return;
@@ -31,12 +32,14 @@ void Projectile::Update(float deltaTime)
     }
     GetComponent<CollisionComponent>()->UpdateInCollisionGrid();
 }
+
 void Projectile::HandleCollision(uint16_t otherTags)
 {
     if (!GetActive()) { return; }
     SetInactive();
     Gamestate::instance->AddToCleanupObjects(GetComponent<CollisionComponent>()->GetParentSharedPtr());
 }
+
 void Projectile::CalculateXandYVelocity()
 {
     m_VelX = m_Speed * sinf(m_Rotation * TO_RADIANS);
